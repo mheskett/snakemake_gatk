@@ -1,0 +1,6 @@
+Rule:			Target:					usedRules:
+
+mark_duplicates		mapped/WILD.rg.sorted.markdup.bam	direct input
+replace_rg		mapped/WILD.rg.sorted.bam		direct input
+moveToOut		outfiles				mark_duplicates
+report			outfiles/report.html			mark_duplicates>moveToOut

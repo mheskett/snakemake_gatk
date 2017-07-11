@@ -1,0 +1,4 @@
+samples:
+    A: data/A.bam
+    #B: data/B.bam
+    #C: data/C.bam
