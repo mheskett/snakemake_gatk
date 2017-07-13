@@ -1,6 +1,32 @@
-Rule:			Target:					usedRules:
+ruleName:		outputTarget:				inputFrom:		preivouslyUsedRules:
 
-mark_duplicates		mapped/WILD.rg.sorted.markdup.bam	direct input
-replace_rg		mapped/WILD.rg.sorted.bam		direct input
-moveToOut		outfiles				mark_duplicates
-report			outfiles/report.html			mark_duplicates>moveToOut
+------------		----------------			----------		------------------
+
+replace_rg		mapped/WILD.rg.sorted.bam		direct sample bam	direct input
+
+mark_duplicates		mapped/WILD.rg.sorted.markdup.bam	replace_rg		replace_rg
+
+SplitNCigarReads	GATK/WILD.split.bam			mark_duplicates		replace_rg>mark_duplicates
+
+------------		----------------			-----------		------------------
+
+BQSR1			GATK/WILD.recal_data.table		referance alinged to	replace_rg>mark_duplicates>SplitNCigarReads
+								SplitNCigarReads
+								referance(knownSites)
+
+BQSR2			GATK/WILD.split.recal_reads.bam		referance alinged to	replace_rg>mark_duplicates>SplitNCigarReads>BQSR1
+								SplitNCigarReads
+								BQSR1
+
+varCalling		GATK/WILD.raw.vcf			referance(knownSites)	replace_rg>mark_duplicates>SplitNCigarReads>BQSR1>BQSR2
+								BQSR2
+								referance alinged to
+
+varFilter		GATK/WILD.filtered.vcf			varCalling		replace_rg>mark_duplicates>SplitNCigarReads>BQSR1>BQSR2>varCalling
+								referance aligned to
+
+------------		----------------			-----------		------------------
+
+moveToOut		outfiles				mark_duplicates		replace_rg>mark_duplicates
+
+report			outfiles/report.html			moveToOut		replace_rg>mark_duplicates>moveToOut

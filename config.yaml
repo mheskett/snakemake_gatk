@@ -1,4 +1,7 @@
 samples:
-    A: data/A.bam
-    #B: data/B.bam
-    #C: data/C.bam
+    #allinged bam file
+    test2: data/test2.short.sort.bam
+    #A: data/test1/A.bam
+    #B: data/test1/B.bam
+    #C: data/test1/C.bam
+
