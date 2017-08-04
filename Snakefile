@@ -4,19 +4,22 @@ SAMPLESDIC = config["samples"]
 JAVA="/usr/lib/jvm/jre-1.8.0/bin/java"
 PICARD="/opt/installed/picard/picard-tools-1.110"
 GATK="/opt/installed/GATK/GenomeAnalysisTK-3.5.jar"
-REF="/home/exacloud/lustre1/SpellmanLab/havens/elements3/data/ucsc.hg19.fasta"  #note need *.fasta.fai and *.dict in same folder
-HG19VCF="/home/exacloud/lustre1/SpellmanLab/heskett/refs/dbsnp_138.hg19.vcf.gz" #note need index file in same folder
-
+REF="/home/exacloud/lustre1/SpellmanLab/havens/elements3/refs/ucsc.hg19.fasta"  #reference genome fasta file, note need *.fasta.fai and *.dict in same folder
+knownSites="/home/exacloud/lustre1/SpellmanLab/heskett/refs/dbsnp_138.hg19.vcf.gz" #note need index file in same folder
 
 #README - information on modification for use:
 #when modifing the file please keep note of the spaces between the last charcter and the end "
 #to change what rules (and so what processes) are run, modify the targeting function, referance targetingNotes.txt
-#to change the which samples (that is the portion of the file names which refernce specific samples) are being used as input adjust the config file
+#to change the which samples are being used for GATK as input adjust the config file
+#all sequences with *_R1.fasta will be aligned if STAR is run 
 #note when writing rules the length of inputs and outputs must be consistant, uses expand() to make this work out
  
+
+#returns a list of targets (output of run rules) without wildcards 
+#change lists in this function to adjust endpoint of script
 def targeting():
     SAMPLES = list(SAMPLESDIC.keys())
-    #put string the target from the rules to be run, using WILD where the sample name would go, assosications are makred in targetNotes.txt
+    #put string of the final target from the rules to be run, using WILD where the sample name would go, assosications are makred in targetNotes.txt
     desiredWildTargets = ["GATK/WILD.filtered.vcf"]
     #if there is not sample name in the output file, put it in this list
     targetList = []
@@ -25,7 +28,7 @@ def targeting():
             targetList.append(tar.replace("WILD", name))
     return targetList
 
-
+#default target of snakemake
 rule all:
     input:
         targeting()
@@ -37,6 +40,19 @@ onerror:
     print("error has occured")
 
 
+#sets up inedx files of reference for STAR alignment
+rule STARindex:
+    shell:
+        "./STARwork/snakemake STARindex"
+
+
+#run STAR alignment, for each of the reads with *_R1.fasta pattern in samples folder
+rule STARalign:
+    input:
+        "./STARwork/snakemake"
+
+
+#adds readGroup for GATK pipeline to input bam file
 rule replace_rg:
     input:
         lambda wildcards: config["samples"][wildcards.sample]
@@ -54,7 +70,7 @@ rule replace_rg:
         "RGPU=unit1 "
         "RGSM={wildcards.sample} "
 
-
+#marks duplicates in a bam file from a bam file
 rule mark_duplicates:
     input:
         rules.replace_rg.output
@@ -71,7 +87,7 @@ rule mark_duplicates:
         "VALIDATION_STRINGENCY=LENIENT "
         "CREATE_INDEX=true "
 
-
+#handels split reads inicated by CIGAR notation-N:skippped region, with correction for GATK in  output in bam file
 rule SplitNCigarReads:
     #note: need have {sample}.dict and {sample}.fasta.fai in folder with reads
     input:
@@ -92,11 +108,12 @@ rule SplitNCigarReads:
         "-RMQT 60 "
         "-U ALLOW_N_CIGAR_READS "
 
+#analyze patters of covariation in the sequence in bam, outputs the patterns in table
 rule BQSR1:
     input:
         split=rules.SplitNCigarReads.output,
         ref={REF},
-        known= {HG19VCF}
+        known= {knownSites}
     output:
         "GATK/{sample}.recal_data.table"
     log:
@@ -111,7 +128,7 @@ rule BQSR1:
         "-knownSites {input.known} "
         "-o {output} "
         "--disable_auto_index_creation_and_locking_when_reading_rods"
-
+#uses BQSR1 table to apply recalibration to an input bam and produces corrected bam
 rule BQSR2:
     #note: skipped visulization steps
     input:
@@ -131,12 +148,14 @@ rule BQSR2:
         "-I {input.split} "
         "-BQSR {input.tab} "
         "-o {output} "
-    
+
+
+#idenify sites in bam which may be variant written into vcf file     
 rule varCalling:
     input:
         reads=rules.BQSR2.output,
         ref={REF},
-        known= {HG19VCF}
+        known= {knownSites}
     output:
         "GATK/{sample}.raw.vcf"
     log:
@@ -154,6 +173,8 @@ rule varCalling:
         "-stand_emit_conf 30.0 "
         "-dontUseSoftClippedBases "
 
+
+#takes vcf and applies hard-filtering variant calls
 rule varFilter:
     input:
         var=rules.varCalling.output,
@@ -177,25 +198,4 @@ rule varFilter:
 
 
 
-
-#rule moveToOut:
-#    input:
-#        expand("mapped/{sample}.rg.sorted.markdup.bam", sample=config["samples"])
-#    output:
-#        "outfiles/"
-#    shell:
-#        "cp {input} {output}"
     
-
-
-#rule report:
-#    input:
-#        "outfiles/"
-#    output:
-#        "outfiles/report.html"
-#    run:
-#        from snakemake.utils import report
-#        report("""
-#        attmepts at adding individual moduals
-#        """, output[0])
-

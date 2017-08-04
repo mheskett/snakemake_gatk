@@ -1,8 +1,14 @@
-ruleName:		outputTarget:				inputFrom:		preivouslyUsedRules:
+ruleName:		outputTarget:				inputNeeded:		preivouslyUsedRules:
+												current workflow, can change
+------------		----------------			----------		------------------
+STARindex		various index files			genome reference	direct input
+
+STARalign		various bam and log files		genome reference	direct input
+								index files
+								sample reads .fasta		
 
 ------------		----------------			----------		------------------
-
-replace_rg		mapped/WILD.rg.sorted.bam		direct sample bam	direct input
+replace_rg		mapped/WILD.rg.sorted.bam		direct sample .bam	direct input
 
 mark_duplicates		mapped/WILD.rg.sorted.markdup.bam	replace_rg		replace_rg
 
@@ -27,6 +33,3 @@ varFilter		GATK/WILD.filtered.vcf			varCalling		replace_rg>mark_duplicates>Split
 
 ------------		----------------			-----------		------------------
 
-moveToOut		outfiles				mark_duplicates		replace_rg>mark_duplicates
-
-report			outfiles/report.html			moveToOut		replace_rg>mark_duplicates>moveToOut
