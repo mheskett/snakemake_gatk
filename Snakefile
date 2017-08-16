@@ -6,6 +6,9 @@ PICARD="/opt/installed/picard/picard-tools-1.110"
 GATK="/opt/installed/GATK/GenomeAnalysisTK-3.5.jar"
 REF="/home/exacloud/lustre1/SpellmanLab/havens/elements3/refs/ucsc.hg19.fasta"  #reference genome fasta file, note need *.fasta.fai and *.dict in same folder
 knownSites="/home/exacloud/lustre1/SpellmanLab/heskett/refs/dbsnp_138.hg19.vcf.gz" #note need index file in same folder
+STARdir="/home/exacloud/lustre1/SpellmanLab/havens/elements4/STARwork" #note should not have / at end
+
+
 
 #README - information on modification for use:
 #when modifing the file please keep note of the spaces between the last charcter and the end "
@@ -40,16 +43,19 @@ onerror:
     print("error has occured")
 
 
+
 #sets up inedx files of reference for STAR alignment
 rule STARindex:
     shell:
-        "./STARwork/snakemake STARindex"
+        "snakemake -s {STARdir}/Snakefile STARindex"
 
 
 #run STAR alignment, for each of the reads with *_R1.fasta pattern in samples folder
 rule STARalign:
     input:
-        "./STARwork/snakemake"
+        "snakemake -s {STARdir}/Snakefile"
+
+
 
 
 #adds readGroup for GATK pipeline to input bam file
