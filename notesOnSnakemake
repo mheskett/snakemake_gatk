@@ -1,0 +1,12 @@
+notesOnSnakemake
+
+by default snakemake targets the first rule in the file, which means it first needs to make that rules input files. If those input files are the output of a different rule, snakemake first runs that rule. By passing outputs into the inputs of the next rule in the workflow we can have snakemake run the whole pipeline. 
+This specific workflow is set up to to be able run the rules and make the target files outlined in targetNotes.txt . When running the primary Snakefile you can choose the output files to be targeted by changing the lists in the targeting function (it is set up this way to not restrict the modularity of the pipeline). 
+To run the desired rule, put the output file (of the last rule in the pipeline) into the targeting function. If the output should have a file for each sample, use the desiredWildTargets list and place WILD where the sample name would go, if there is one combined file use the targetList. Except when doing STAR, to run star use $snakemake STARindex --cores n and then $snakemake STARalign --cores n where you can change n cores. You may also choose to control the THREADS variable in Snakemake.star. 
+
+
+Put all the samples in ~/samples and aligned files (which snakemake will place by default) into ~/align folder.    
+
+Note: current file paths have been deleted.
+
+Please change the recipient of the mail function.
