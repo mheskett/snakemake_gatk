@@ -6,7 +6,6 @@ PICARD="/opt/installed/picard/picard-tools-1.110"
 GATK="/opt/installed/GATK/GenomeAnalysisTK-3.5.jar"
 REF="/home/exacloud/lustre1/SpellmanLab/havens/elements3/refs/ucsc.hg19.fasta"  #reference genome fasta file, note need *.fasta.fai and *.dict in same folder
 knownSites="/home/exacloud/lustre1/SpellmanLab/heskett/refs/dbsnp_138.hg19.vcf.gz" #note need index file in same folder
-STARdir="/home/exacloud/lustre1/SpellmanLab/havens/elements4/STARwork" #note should not have / at end
 
 
 
@@ -44,17 +43,17 @@ onerror:
 
 
 
+
 #sets up inedx files of reference for STAR alignment
 rule STARindex:
     shell:
-        "snakemake -s {STARdir}/Snakefile STARindex"
+        "snakemake -s Snakefile.star STARindex"
 
 
 #run STAR alignment, for each of the reads with *_R1.fasta pattern in samples folder
 rule STARalign:
     input:
-        "snakemake -s {STARdir}/Snakefile"
-
+        "snakemake -s Snakefile.star"
 
 
 
